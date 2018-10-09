@@ -1,0 +1,26 @@
+{
+  "name": "digital-goods-sample-action",
+  "description": "This is a sample of an Action using Digital Goods API",
+  "scripts": {
+    "lint": "eslint --fix .",
+    "serve": "firebase serve --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "8"
+  },
+  "dependencies": {
+    "firebase-admin": "^5.12.1",
+    "firebase-functions": "^2.0.0",
+    "googleapis": "^19.0.0",
+    "actions-on-google": "^2.4.1",
+    "node-fetch": "^2.2.0"
+  },
+  "devDependencies": {
+    "eslint": "^4.12.0",
+    "eslint-config-google": "^0.9.1"
+  }
+}
