@@ -24,7 +24,7 @@ const {
   Carousel,
 } = require('actions-on-google');
 
-const consumableIds = ['premium'];
+const consumableIds = ['gas'];
 
 /**
  * Incomplete type definition for a SKU.
@@ -112,40 +112,15 @@ app.intent('Initiate the Purchase', async (conv, {SKU}) => {
   if (!selectedSKU) {
     conv.close(`Hm, I can not find details for ${selectedSKUId}. Good bye.`);
   }
-  conv.ask('Great! Here you go. ');
-  // Try to find an entitlement for a selected sku because this will
-  // affect which api endpoint to call: consume, or via new CompletePurchase.
-  const entitlementForSelectedSKU = findSelectedEntitlement(
-    conv.user.entitlements, selectedSKU);
-  let appResponse;
-  // Selected sku is in our list of consumables and user already
-  // purchased the item.
-  if (consumableIds.indexOf(selectedSKU.skuId.id) !== -1
-    && entitlementForSelectedSKU) {
-    const purchaseToken =
-      entitlementForSelectedSKU.inAppDetails.inAppPurchaseData.purchaseToken;
-    try {
-      await consume(
-        conv.request.conversation.conversationId, purchaseToken);
-      appResponse = `You successfully purchased ${selectedSKUId}.` +
-        ' Would you like to do anything else?';
-    } catch (error) {
-      console.log(error);
-      conv.contexts.set(BUILD_ORDER_CONTEXT,
-        BUILD_ORDER_LIFETIME);
-      appResponse = `There was an error trying to re-purchase` +
-        ` ${selectedSKUId}. Would you like to try again?`;
-    }
-  } else {
-    appResponse = new CompletePurchase({
-      skuId: {
-        skuType: selectedSKU.skuId.skuType,
-        id: selectedSKU.skuId.id,
-        packageName: selectedSKU.skuId.packageName,
-      },
-    });
-  }
-  conv.ask(appResponse);
+  conv.data.purchasedItemSku = selectedSKU;
+  conv.ask('Great! Here you go.');
+  conv.ask(new CompletePurchase({
+    skuId: {
+      skuType: selectedSKU.skuId.skuType,
+      id: selectedSKU.skuId.id,
+      packageName: selectedSKU.skuId.packageName,
+    },
+  }));
 });
 
 /**
@@ -168,6 +143,39 @@ const findSelectedEntitlement = (entitlements, selectedSKU) => {
   return null;
 };
 
+/**
+ * Consume the recently purchased item. Item should be checked in-advance.
+ * @param {Object} conv
+ */
+const doConsume = async (conv) => {
+  const entitlementForSelectedSKU = findSelectedEntitlement(
+    conv.user.entitlements, conv.data.purchasedItemSku);
+  const purchaseToken =
+    entitlementForSelectedSKU.inAppDetails.inAppPurchaseData.purchaseToken;
+  try {
+    await consume(
+      conv.request.conversation.conversationId, purchaseToken);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+/**
+ * Utility function that checks if the item should be consumed. The item should
+ * be consumed iff selected SKU is in our list of consumables and user already
+ * purchased the item.
+ * @param {Object} conv
+ * @return {boolean} if item should be consumed
+ */
+const shouldBeConsumed = (conv) => {
+  const entitlementForSelectedSKU = findSelectedEntitlement(
+    conv.user.entitlements, conv.data.purchasedItemSku);
+  // Selected sku is in our list of consumables and user already
+  // purchased the item.
+  return consumableIds.indexOf(conv.data.purchasedItemSku.skuId.id) !== -1
+    && entitlementForSelectedSKU;
+};
+
 // 4. Describe the Purchase Status.
 app.intent('Describe the Purchase Status', async (conv) => {
   const arg = conv.arguments.get('COMPLETE_PURCHASE_VALUE');
@@ -177,43 +185,29 @@ app.intent('Describe the Purchase Status', async (conv) => {
     return;
   }
   if (arg.purchaseStatus === 'PURCHASE_STATUS_OK') {
-    conv.close('Purchase completed! You\'re all set!');
+    conv.contexts.set(BUILD_ORDER_CONTEXT, BUILD_ORDER_LIFETIME);
+    const appResponse = `You've successfully purchased the item!. Would you`
+      + ` like to do anything else?`;
+    if (shouldBeConsumed(conv)) {
+      await doConsume(conv);
+    }
+    conv.ask(appResponse);
   } else if (arg.purchaseStatus === 'PURCHASE_STATUS_ALREADY_OWNED') {
-    conv.close('Purchase failed. You already own the item.');
+    if (shouldBeConsumed(conv)) {
+      await doConsume(conv);
+      conv.contexts.set(BUILD_ORDER_CONTEXT, BUILD_ORDER_LIFETIME);
+      conv.ask('Oops, looks like there was an error.'
+        + ' Would you like to retry the purchase?');
+    } else {
+      conv.close('Purchase failed. You already own the item.');
+    }
   } else if (arg.purchaseStatus === 'PURCHASE_STATUS_ITEM_UNAVAILABLE') {
     conv.close('Purchase failed. Item is not available.');
   } else if (arg.purchaseStatus === 'PURCHASE_STATUS_ITEM_CHANGE_REQUESTED') {
-    // Reprompt with your item selection dialog
-    let skus;
-    try {
-      skus = await getSkus(conv.request.conversation.conversationId);
-      if (skus.length === 0) {
-        conv.close('Looks like you changed your mind, but unfortunately,' +
-          ' there is nothing available now. Please try again later');
-        return;
-      }
-    } catch (error) {
-      console.log(error);
-      conv.close(`Oops, looks like there was an internal error.` +
-        ` Please try again later.`);
-      return;
-    }
-    // Create a mapping of SkuId.id to Sku object
-    conv.data.skus = skus.reduce((acc, curr) => {
-      acc[curr.skuId.id] = curr;
-      return acc;
-    }, {});
     // Reset context to reconfigure the conversation with the user.
     conv.contexts.set(BUILD_ORDER_CONTEXT, BUILD_ORDER_LIFETIME);
-    const appResponse = buildResponse(skus, conv.screen);
     conv.ask(`Looks like you've changed your mind.` +
-      ` Let me check what's available now.` +
-      ` Looks like ${appResponse.simpleResponse} ` +
-      ` ${skus.length === 1 ? 'is': 'are'}` +
-      ` available. Which one would you like?`);
-    if (appResponse.richResponse) {
-      conv.ask(appResponse.richResponse);
-    }
+      ` Would you like to try again?`);
   } else if (arg.purchaseStatus === 'PURCHASE_STATUS_USER_CANCELLED') {
     // Reset context to reconfigure the conversation with the user.
     conv.contexts.set(BUILD_ORDER_CONTEXT, BUILD_ORDER_LIFETIME);

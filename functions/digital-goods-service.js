@@ -14,10 +14,10 @@
 'use strict';
 
 const google = require('googleapis');
-const fetch = require('node-fetch');
+const fetch = require('fetch');
 // Import the service account key used to authorize the request. Replace the
 // string path with a path to your service account key.
-const serviceAccount = require('/path/to/key.json');
+const serviceAccount = require('path/to/key.json');
 // Put your packageName name here.
 const packageName = 'PACKAGE_NAME';
 const inAppProductIds = {

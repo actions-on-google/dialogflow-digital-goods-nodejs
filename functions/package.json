@@ -13,11 +13,11 @@
     "node": "8"
   },
   "dependencies": {
+    "actions-on-google": "^2.6.0",
     "firebase-admin": "^5.12.1",
     "firebase-functions": "^2.0.0",
     "googleapis": "^19.0.0",
-    "actions-on-google": "^2.4.1",
-    "node-fetch": "^2.2.0"
+    "node-fetch": "^2.3.0"
   },
   "devDependencies": {
     "eslint": "^4.12.0",
