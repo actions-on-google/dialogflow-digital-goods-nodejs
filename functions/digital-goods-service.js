@@ -14,7 +14,7 @@
 'use strict';
 
 const google = require('googleapis');
-const fetch = require('fetch');
+const fetch = require('node-fetch');
 // Import the service account key used to authorize the request. Replace the
 // string path with a path to your service account key.
 const serviceAccount = require('path/to/key.json');
