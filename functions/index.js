@@ -110,7 +110,7 @@ app.intent('Initiate the Purchase', async (conv, {SKU}) => {
   const selectedSKUId = conv.arguments.get('OPTION') || SKU;
   const selectedSKU = conv.data.skus[selectedSKUId];
   if (!selectedSKU) {
-    conv.close(`Hm, I can not find details for ${selectedSKUId}. Good bye.`);
+    conv.close(`Hm, I can not find details for ${selectedSKUId}. Goodbye.`);
   }
   conv.data.purchasedItemSku = selectedSKU;
   conv.ask('Great! Here you go.');
@@ -186,7 +186,7 @@ app.intent('Describe the Purchase Status', async (conv) => {
   }
   if (arg.purchaseStatus === 'PURCHASE_STATUS_OK') {
     conv.contexts.set(BUILD_ORDER_CONTEXT, BUILD_ORDER_LIFETIME);
-    const appResponse = `You've successfully purchased the item!. Would you`
+    const appResponse = `You've successfully purchased the item! Would you`
       + ` like to do anything else?`;
     if (shouldBeConsumed(conv)) {
       await doConsume(conv);

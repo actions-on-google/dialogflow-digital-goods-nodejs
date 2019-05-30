@@ -1,83 +1,73 @@
-# Actions on Google: Digital Goods Sample using Node.js
+# Actions on Google: Digital Goods Sample
 
-This sample demonstrates the use of the Digital Purchases API to provide digital transactions through Actions on Google.
+This sample demonstrates Actions on Google features for use on Google Assistant including the Digital Purchase API -- using the [Node.js client library](https://github.com/actions-on-google/actions-on-google-nodejs) and deployed on [Cloud Functions for Firebase](https://firebase.google.com/docs/functions/).
 
 ## Setup Instructions
+### Prerequisites
+1. Node.js and NPM
+    + We recommend installing using [NVM](https://github.com/creationix/nvm)
+1. Install the [Firebase CLI](https://developers.google.com/actions/dialogflow/deploy-fulfillment)
+    + We recommend using version 6.5.0, `npm install -g firebase-tools@6.5.0`
+    + Run `firebase login` with your Google account
 
-### Pre-requisites
-You must own a web domain. The owner of this web domain will receive an email to verify ownership as part of the Brand Verification of your Action. See more details here.
-You must have a Play Console developer account.
-You must have an Android phone to test the Action. This phone must have the Google Assistant installed and a payment method set up for your Google account. Using this sample does not require you to actually make any purchases with this account.
+### Digital Goods Requirements
++ You must own a web domain.
+    + The domain owner will receive an email to verify ownership via [Google Search Console](https://search.google.com/search-console/welcome)
++ You must have a Play Console developer account: [**sign up**](https://play.google.com/apps/publish/signup/)
++ You must have an Android APK.
+    + This sample uses [android-play-billing](https://github.com/googlesamples/android-play-billing/tree/master/TrivialDriveKotlin) Kotlin sample app on Github.
+    + Follow the Kotlin README for the setup details.
+    + Read about generating a keystore in [Android Studio](https://developer.android.com/studio/publish/app-signing.html#generate-key).
+    + Must do an Alpha release at minimum
++ You can only test digital goods on Android devices.
+    + Google Assistant installed alongside a payment method set up for your Google account.
+    + **Note**: All purchases are done in Sandbox mode by default.
++ Brand verification must be completed before testing (website and Android app state `Connected` in Actions console).
 
-Note: Ensure you have digital transactions enabled under *Deploy* > *Directory Information* > *Transactions* > *Do your Actions use the Digital Purchase API to perform transactions of digital goods?*
+### Configuration
+#### Actions Console
+1. From the [Actions on Google Console](https://console.actions.google.com/), add a new project > **Create Project** > under **More options** > **Conversational**
+1. In the Actions console, from the left navigation menu under **Deploy** > fill out **Directory Information**, where all of the information is required to run transactions (sandbox or otherwise) unless specifically noted as optional.
+    + **Additional information** >
+        + Do your Actions use the Digital Purchase API to perform transactions of digital goods? > **Yes** > **Save**.
+1. Under **Advanced Options** > **Brand verification** > select **</>** to verify your website. Once the status is `Connected` then can connect an Android app.
+1. In the [Google Play Developer Console](https://play.google.com/apps/publish) > **Development tools** > **Services & APIs** > **App Indexing from Google Search** > **Verify Website** button. Once you've verified your site it will take up to 24hrs for *Brand verification* reflect this change in the Actions console, nonetheless move on to the next step.
+1. Back in the Actions console, from the left navigation menu under **Build** > **Actions** > **Add Your First Action** > **BUILD** (this will bring you to the Dialogflow console) > Select language and time zone > **CREATE**.
+1. In the Dialogflow console, go to **Settings** ⚙ > **Export and Import** > **Restore from zip** using the `agent.zip` in this sample's directory.
 
-### Setup Play Console and Android app
+### Service Account Authentication with JWT/OAuth 2.0
+1. In the [Google Cloud Platform console](https://console.cloud.google.com/), select your *Project ID* from the dropdown > **Menu ☰** > **APIs & Services** > **Library**
+1. Select **Actions API** > **Enable**
+1. Under **Menu ☰** > **APIs & Services** > **Credentials** > **Create Credentials** > **Service Account Key**.
+1. From the dropdown, select **New Service Account**
+    + name:  `service-account`
+    + role:  **Project/Owner**
+    + key type: **JSON** > **Create**
+    + Your private JSON file will be downloaded to your local machine; save as `service-account.json` in `functions/`
 
-This sample uses digital purchases from the Trivial Drive V2 sample for Android. To get started, follow their README for setup instructions with your Play Console account.
+#### Firebase Deployment
+1. Replace `'PACKAGE_NAME'` in `functions/digital-goods-service.js` with the package name of your Android app
+1. On your local machine, in the `functions` directory, run `npm install`
+1. Run `firebase deploy --project {PROJECT_ID}` to deploy the function
+    + To find your **Project ID**: In [Dialogflow console](https://console.dialogflow.com/) under **Settings** ⚙ > **General** tab > **Project ID**.
 
-### Verify your brand in the Actions Console
-1. Use the [Actions on Google Console](https://console.actions.google.com) to add a new project with a name of your choosing and click *Create Project*.
-1. Click *Skip*, located on the top right to skip over category selection menu.
-1. On the left navigation menu under *ADVANCED OPTIONS*, click on *Brand Verification*. Click on the *</>* icon to connect your website. Make sure to use the same website associated with your Play Console developer account.
-1. You may need to confirm your ownership of the website via email and then wait a few hours before the site is verified.
-1. Once the site is verified, return to the Actions Console.
-1. On the left navigation menu under *ADVANCED OPTIONS*, click on *Brand Verification*.
-1. Click *CONNECT APP* and follow the instructions to connect the Android app published earlier.
+#### Dialogflow Console
+1. Return to the [Dialogflow Console](https://console.dialogflow.com) > select **Fulfillment** > **Enable** Webhook > Set **URL** to the **Function URL** that was returned after the deploy command > **SAVE**.
+    ```
+    Function URL (dialogflowFirebaseFulfillment): https://${REGION}-${PROJECT_ID}.cloudfunctions.net/dialogflowFirebaseFulfillment
+    ```
+1. From the left navigation menu, click **Integrations** > **Integration Settings** under Google Assistant > Enable **Auto-preview changes** >  **Test** to open the Actions on Google simulator then say or type `Talk to my test app`.
 
-### Setup the Dialogflow Agent
-Once the above steps are complete, and you see your website and Android app listed in the *Brand verification* page of the Actions Console, you can continue with the steps below.
+### Running this Sample
++ You can test this Action on any Android device with Google Assistant-enabled, where the Assistant is signed into the same account used to create this project. Just say or type, “OK Google, talk to my test app”.
++ You can also use the Actions on Google Console simulator to test most features and preview on-device behavior.
 
-1. On the left navigation menu under *DEPLOY*, click on *Directory Information*.
-1. Add your App info, including images, a contact email and privacy policy. This information can all be edited before submitting for review.
-1. Check the box at the bottom to indicate this app uses the Digital Purchases API under *Additional Information*. Click *Save*.
-1. On the left navigation menu under *BUILD*, click on *Actions*. Click on *Add Your First Action* and choose your app's language(s).
-1. Select *Custom intent*, click *BUILD*. This will open a Dialogflow console. Click *CREATE*.
-1. Click on the gear icon to see the project settings.
-1. Select *Export and Import*.
-1. Select *Restore from zip*. Follow the directions to restore from the `digitalpurchases_agent.zip` file in this repo.
-
-
-#### Get a Service Account Key
-1. Visit the Google Cloud console for the project used in the Actions console.
-1. Navigate to the API Library.
-1. Search for and enable the Google Actions API.
-1. Navigate to the Credentials page in the API manager. You may need to enable access.
-1. Click Create credentials > Service Account Key
-1. Click the Select box under Service Account and click New Service Account
-1. Give the Service Account a name (like "PROJECT_NAME-digital-goods") and the role of Project Owner
-1. Select the JSON key type
-1. Click Create
-1. A JSON service account key will be downloaded to the local machine.
-1. In `functions/digital-goods-service.js`, replace `'path/to/key.json'` with the path to your key.
-
-#### Deploy fulfillment
-1. You’ll need to verify some code changes to run the sample.
-    1. Verify that *inAppProductIds* in `function/digital-goods-service.js` are the same as those entered in the Play Console.
-    1. Verify that any string(s) in the *consumableIds* array in `functions/index.js` are entered as products in the Play Console as well.
-1. Replace `'PACKAGE_NAME'` in `functions/digital-goods-service.js` with the package name of your Android app.
-1. Deploy the fulfillment webhook provided in the functions folder using [Google Cloud Functions for Firebase](https://firebase.google.com/docs/functions/):
-    1. Follow the instructions to [set up and initialize Firebase SDK for Cloud Functions](https://firebase.google.com/docs/functions/get-started#set_up_and_initialize_functions_sdk). Make sure to select the project that you have previously generated in the Actions on Google Console and to reply `N` when asked to overwrite existing files by the Firebase CLI.
-    1. Run `firebase deploy --only functions` and take note of the endpoint where the fulfillment webhook has been published. It should look like `Function URL (transactions): https://${REGION}-${PROJECT}.cloudfunctions.net/transactions`
-1. Go back to the Dialogflow console and select *Fulfillment* from the left navigation menu.
-1. Enable *Webhook*, set the value of *URL* to the `Function URL` from the previous step, then click *Save*.
-1. Select *Integrations* from the left navigation menu and open the *Integration Settings* menu for Actions on Google. Click *Manage Assistant App*, which will take you to the [Actions on Google Console](https://console.actions.google.com).
-
-#### Testing
-1. Return [Actions on Google Console](https://console.actions.google.com), on the left navigation menu under *Test*, click on *Simulator*.
-1. Click *Start Testing* and select the latest version (VERSION - Draft).
-1. Type `Talk to my test app` in the simulator, or say `OK Google, talk to my test app` to any Actions on Google enabled device signed into your
-developer account.
-1. Follow the instructions below to test a transaction.
-1. To test payment when confirming transaction, uncheck the box in the Actions
-console simulator indicating testing in Sandbox mode.
-
-### References & Issues
+## References & Issues
 + Questions? Go to [StackOverflow](https://stackoverflow.com/questions/tagged/actions-on-google), [Assistant Developer Community on Reddit](https://www.reddit.com/r/GoogleAssistantDev/) or [Support](https://developers.google.com/actions/support/).
 + For bugs, please report an issue on Github.
-+ Actions on Google [Webhook Boilerplate Template](https://github.com/actions-on-google/dialogflow-webhook-boilerplate-nodejs).
-+ [Codelabs](https://codelabs.developers.google.com/?cat=Assistant) for Actions on Google.
-+ Actions on Google [Documentation](https://developers.google.com/actions/extending-the-assistant).
-+ More info on deploying with [Firebase](https://developers.google.com/actions/dialogflow/deploy-fulfillment).
++ Actions on Google [Documentation](https://developers.google.com/actions/extending-the-assistant)
++ Actions on Google [Codelabs](https://codelabs.developers.google.com/?cat=Assistant)
++ [Webhook Boilerplate Template](https://github.com/actions-on-google/dialogflow-webhook-boilerplate-nodejs) for Actions on Google
 
 ## Make Contributions
 Please read and follow the steps in the [CONTRIBUTING.md](CONTRIBUTING.md).
