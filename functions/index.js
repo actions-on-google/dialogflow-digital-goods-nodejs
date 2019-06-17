@@ -21,6 +21,7 @@ const {
 const {
   dialogflow,
   CompletePurchase,
+  DigitalPurchaseCheck,
   Carousel,
 } = require('actions-on-google');
 
@@ -47,6 +48,30 @@ const app = dialogflow({debug: true});
 const BUILD_ORDER_CONTEXT = 'build-the-order';
 const BUILD_ORDER_LIFETIME = 5;
 
+// 1. Default Welcome Intent
+app.intent('Default Welcome Intent', async (conv, { SKU }) => {
+  // Immediately invoke digital purchase check intent to confirm
+  // purchase eligbility.
+  conv.ask(new DigitalPurchaseCheck());
+});
+
+// 2. Digital Purchase Check
+app.intent('Digital Purchase Check', async (conv) => {
+  const arg = conv.arguments.get('DIGITAL_PURCHASE_CHECK_RESULT');
+  // User does not meet necessary conditions for completing a digital
+  // purchase
+  if (!arg || !arg.resultType) {
+    conv.close('Digital Purchase check failed. Please check logs."');
+    return;
+  }
+  if (arg.resultType === 'CANNOT_PURCHASE' || arg.resultType === 'RESULT_TYPE_UNSPECIFIED') {
+    conv.close(`It looks like you aren't able to make digital purchases. Sorry about that.`);
+    return;
+  }
+  conv.ask('Welcome to Digital Goods Sample. Would you like to see what I have for sale?');
+});
+
+// 3. Build the Order
 app.intent('Build the Order', async (conv) => {
   let skus;
   try {
@@ -105,8 +130,8 @@ const buildSimpleResponse = (skus) => {
   return s.join(', ');
 };
 
-// 3. Complete the purchase.
-app.intent('Initiate the Purchase', async (conv, {SKU}) => {
+// 4. Initiate the Purchase
+app.intent('Initiate the Purchase', async (conv, { SKU }) => {
   const selectedSKUId = conv.arguments.get('OPTION') || SKU;
   const selectedSKU = conv.data.skus[selectedSKUId];
   if (!selectedSKU) {
@@ -176,7 +201,7 @@ const shouldBeConsumed = (conv) => {
     && entitlementForSelectedSKU;
 };
 
-// 4. Describe the Purchase Status.
+// 5. Describe the Purchase Status
 app.intent('Describe the Purchase Status', async (conv) => {
   const arg = conv.arguments.get('COMPLETE_PURCHASE_VALUE');
   console.log('User Decision: ' + JSON.stringify(arg));
