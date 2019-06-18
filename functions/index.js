@@ -58,12 +58,11 @@ app.intent('Default Welcome Intent', async (conv, { SKU }) => {
 // 2. Digital Purchase Check
 app.intent('Digital Purchase Check', async (conv) => {
   const arg = conv.arguments.get('DIGITAL_PURCHASE_CHECK_RESULT');
-  // User does not meet necessary conditions for completing a digital
-  // purchase
   if (!arg || !arg.resultType) {
     conv.close('Digital Purchase check failed. Please check logs."');
     return;
   }
+  // User does not meet necessary conditions for completing a digital purchase
   if (arg.resultType === 'CANNOT_PURCHASE' || arg.resultType === 'RESULT_TYPE_UNSPECIFIED') {
     conv.close(`It looks like you aren't able to make digital purchases. Sorry about that.`);
     return;
