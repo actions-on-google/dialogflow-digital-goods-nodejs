@@ -26,13 +26,13 @@ This sample demonstrates Actions on Google features for use on Google Assistant 
 
 ### Configuration
 #### Actions Console
-1. From the [Actions on Google Console](https://console.actions.google.com/), add a new project > **Create Project** > under **More options** > **Conversational**
-1. In the Actions console, from the left navigation menu under **Deploy** > fill out **Directory Information**, where all of the information is required to run transactions (sandbox or otherwise) unless specifically noted as optional.
+1. From the [Actions on Google Console](https://console.actions.google.com/), New project > **Create project** > under **More options** > **Conversational**
+1. In the Actions console, from the top menu under **Deploy** > fill out **Directory Information**, where all of the information is required to run transactions (sandbox or otherwise) unless specifically noted as optional.
     + **Additional information** >
         + Do your Actions use the Digital Purchase API to perform transactions of digital goods? > **Yes** > **Save**.
-1. Under **Advanced Options** > **Brand verification** > select **</>** to verify your website. Once the status is `Connected` then can connect an Android app.
+1. From the top menu under **Deploy** > **Brand verification** (left nav) > select **</>** to verify your website. Once the status is `Connected` then can connect an Android app.
 1. In the [Google Play Developer Console](https://play.google.com/apps/publish) > **Development tools** > **Services & APIs** > **App Indexing from Google Search** > **Verify Website** button. Once you've verified your site it will take up to 24hrs for *Brand verification* reflect this change in the Actions console, nonetheless move on to the next step.
-1. Back in the Actions console, from the left navigation menu under **Build** > **Actions** > **Add Your First Action** > **BUILD** (this will bring you to the Dialogflow console) > Select language and time zone > **CREATE**.
+1. Back in the Actions console, from the top menu under **Develop** > **Actions** > **Add your first action** > **BUILD** (this will bring you to the Dialogflow console) > Select language and time zone > **CREATE**.
 1. In the Dialogflow console, go to **Settings** ⚙ > **Export and Import** > **Restore from zip** using the `agent.zip` in this sample's directory.
 
 ### Service Account Authentication with JWT/OAuth 2.0
